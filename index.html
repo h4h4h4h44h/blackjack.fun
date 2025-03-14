@@ -67,10 +67,10 @@
     </div>
     <div id="trivia-area">
         <p id="trivia-question"></p>
-        <button onclick="answerTrivia(0)">A</button>
-        <button onclick="answerTrivia(1)">B</button>
-        <button onclick="answerTrivia(2)">C</button>
-        <button onclick="answerTrivia(3)">D</button>
+        <button id="option-0" onclick="answerTrivia(0)"></button>
+        <button id="option-1" onclick="answerTrivia(1)"></button>
+        <button id="option-2" onclick="answerTrivia(2)"></button>
+        <button id="option-3" onclick="answerTrivia(3)"></button>
     </div>
     <script>
         let bankroll = 100;
@@ -79,6 +79,13 @@
         let playerHand = [];
         let dealerHand = [];
         let currentBet = 0;
+        
+        const triviaQuestions = [
+            { question: "What is the capital of Canada?", options: ["Toronto", "Vancouver", "Ottawa", "Montreal"], answer: 2 },
+            { question: "Which planet is known as the Red Planet?", options: ["Earth", "Venus", "Mars", "Jupiter"], answer: 2 },
+            { question: "How many continents are there on Earth?", options: ["5", "6", "7", "8"], answer: 2 },
+            { question: "What is the chemical symbol for gold?", options: ["Au", "Ag", "Pb", "Fe"], answer: 0 }
+        ];
         
         function startRound() {
             let betInput = document.getElementById("bet-amount").value;
@@ -93,82 +100,20 @@
             document.getElementById("split-btn").style.display = "inline-block";
         }
 
-        function hit() {
-            playerHand.push(drawCard());
-            updateDisplay();
-            checkBust();
-        }
-        
-        function stand() {
-            dealerTurn();
-        }
-
-        function doubleDown() {
-            if (bankroll >= currentBet) {
-                bankroll -= currentBet;
-                currentBet *= 2;
-                hit();
-                stand();
-            }
-        }
-
-        function split() {
-            alert("Split function to be implemented.");
-        }
-
-        function drawCard() {
-            return Math.floor(Math.random() * 10) + 1;
-        }
-        
-        function updateDisplay() {
-            document.getElementById("player-hand").innerText = playerHand.join(", ");
-            document.getElementById("player-total").innerText = playerHand.reduce((a, b) => a + b, 0);
-            document.getElementById("dealer-hand").innerText = dealerHand[0] + ", ?";
-            document.getElementById("dealer-total").innerText = "?";
-            document.getElementById("bankroll").innerText = bankroll;
-            document.getElementById("current-bet").innerText = currentBet;
-        }
-        
-        function checkBust() {
-            let total = playerHand.reduce((a, b) => a + b, 0);
-            if (total > 21) {
-                alert("Bust! You lose.");
-                startTrivia();
-            }
-        }
-        
-        function dealerTurn() {
-            let dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
-            while (dealerTotal < 17) {
-                dealerHand.push(drawCard());
-                dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
-            }
-            determineWinner();
-        }
-        
-        function determineWinner() {
-            let playerTotal = playerHand.reduce((a, b) => a + b, 0);
-            let dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
-            if (dealerTotal > 21 || playerTotal > dealerTotal) {
-                bankroll += currentBet * 2;
-                alert("You win!");
-            } else if (playerTotal < dealerTotal) {
-                alert("Dealer wins!");
-                startTrivia();
-            } else {
-                bankroll += currentBet;
-                alert("It's a tie!");
-            }
-            updateDisplay();
-        }
-        
         function startTrivia() {
             document.getElementById("trivia-area").style.display = "block";
-            document.getElementById("trivia-question").innerText = "What is the capital of Canada?";
+            let qIndex = Math.floor(Math.random() * triviaQuestions.length);
+            let question = triviaQuestions[qIndex];
+            document.getElementById("trivia-question").innerText = question.question;
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`option-${i}`).innerText = question.options[i];
+                document.getElementById(`option-${i}`).setAttribute("data-answer", i === question.answer);
+            }
         }
-        
+
         function answerTrivia(option) {
-            if (option === 2) {
+            let isCorrect = document.getElementById(`option-${option}`).getAttribute("data-answer") === "true";
+            if (isCorrect) {
                 triviaProgress++;
                 if (triviaProgress >= 3) {
                     bankroll += 10;
