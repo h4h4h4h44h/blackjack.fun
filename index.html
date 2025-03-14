@@ -125,6 +125,8 @@
         let gameInProgress = false;
         let isSplit = false;
         let currentTrivia = null;
+        let canDouble = false;
+        let canSplit = false;
 
         const suits = ['♥', '♦', '♠', '♣'];
         const triviaQuestions = [
@@ -194,9 +196,14 @@
             gameInProgress = true;
             isSplit = false;
             splitHand = [];
+            
+            const playerTotal = calculateHandTotal(playerHand);
+            canDouble = playerHand.length === 2 && (playerTotal === 9 || playerTotal === 10 || playerTotal === 11);
+            canSplit = playerHand.length === 2 && cardValue(playerHand[0]) === cardValue(playerHand[1]);
+            
             toggleButtons(true);
             updateDisplay();
-            if (calculateHandTotal(playerHand) === 21) {
+            if (playerTotal === 21) {
                 endRound(true);
             }
         }
@@ -205,9 +212,11 @@
             if (!gameInProgress) return;
             const targetHand = split ? splitHand : playerHand;
             targetHand.push(drawCard());
+            canDouble = false;
+            canSplit = false;
             updateDisplay();
             if (calculateHandTotal(targetHand) > 21) {
-                if (isSplit && !split) hit(true); // Move to split hand if main busts
+                if (isSplit && !split) hit(true);
                 else endRound();
             }
         }
@@ -215,7 +224,7 @@
         function stand(split = false) {
             if (!gameInProgress) return;
             if (isSplit && !split) {
-                hit(true); // Move to split hand
+                hit(true);
             } else {
                 dealerPlay();
                 endRound();
@@ -229,12 +238,13 @@
         }
 
         function doubleDown(split = false) {
-            if (!gameInProgress || bankroll < currentBet) return;
+            if (!gameInProgress || !canDouble || bankroll < currentBet) return;
             bankroll -= currentBet;
             if (split) splitBet *= 2;
             else currentBet *= 2;
             const targetHand = split ? splitHand : playerHand;
             targetHand.push(drawCard());
+            canDouble = false;
             updateDisplay();
             if (calculateHandTotal(targetHand) <= 21 && (!isSplit || split)) {
                 dealerPlay();
@@ -243,16 +253,16 @@
         }
 
         function split() {
-            if (!gameInProgress || playerHand.length !== 2 || 
-                cardValue(playerHand[0]) !== cardValue(playerHand[1]) || 
-                bankroll < currentBet) return;
-            
+            if (!gameInProgress || !canSplit || bankroll < currentBet) return;
             splitHand = [playerHand.pop()];
             playerHand.push(drawCard());
             splitHand.push(drawCard());
             bankroll -= currentBet;
             splitBet = currentBet;
             isSplit = true;
+            canSplit = false;
+            const playerTotal = calculateHandTotal(playerHand);
+            canDouble = (playerTotal === 9 || playerTotal === 10 || playerTotal === 11);
             updateDisplay();
             toggleButtons(true);
         }
@@ -268,7 +278,6 @@
                 bankroll += currentBet * 2.5;
                 message = "Blackjack! You win!";
             } else {
-                // Main hand
                 if (playerTotal > 21) {
                     dealerBankroll += currentBet;
                     message += "Main hand busts! ";
@@ -286,7 +295,6 @@
                     message += "Main hand push! ";
                 }
 
-                // Split hand
                 if (isSplit) {
                     if (splitTotal > 21) {
                         dealerBankroll += splitBet;
@@ -311,24 +319,20 @@
             toggleButtons(false);
             alert(message);
 
-            // Trivia chance when losing money
-            if (bankroll < 50 && Math.random() < 0.3) {
-                showTrivia();
-            }
-
             currentBet = 0;
             splitBet = 0;
             playerHand = [];
             splitHand = [];
             dealerHand = [];
             isSplit = false;
+            canDouble = false;
+            canSplit = false;
             document.getElementById("split-hand").style.display = "none";
             updateDisplay();
 
             if (bankroll <= 0) {
-                alert("Game Over! You're out of money!");
-                bankroll = 100;
-                dealerBankroll = 100;
+                alert("You're out of money! Answer a trivia question to get back in the game!");
+                showTrivia();
             }
         }
 
@@ -336,10 +340,8 @@
             document.getElementById("start-round-btn").disabled = active;
             document.getElementById("hit-btn").disabled = !active;
             document.getElementById("stand-btn").disabled = !active;
-            document.getElementById("double-btn").disabled = !active;
-            document.getElementById("split-btn").disabled = !active || 
-                playerHand.length !== 2 || 
-                cardValue(playerHand[0]) !== cardValue(playerHand[1]);
+            document.getElementById("double-btn").disabled = !active || !canDouble;
+            document.getElementById("split-btn").disabled = !active || !canSplit;
         }
 
         function showTrivia() {
@@ -350,17 +352,21 @@
                 document.getElementById(`option-${i}`).innerText = currentTrivia.options[i];
             }
             triviaArea.style.display = "block";
+            document.getElementById("start-round-btn").disabled = true; // Disable Deal button during trivia
         }
 
         function answerTrivia(choice) {
             const triviaArea = document.getElementById("trivia-area");
             if (choice === currentTrivia.answer) {
                 bankroll += 20;
-                alert("Correct! You won $20!");
+                alert("Correct! You've won $20 to continue playing!");
             } else {
-                alert("Wrong answer!");
+                alert("Wrong answer! Game Over! Starting fresh with $100.");
+                bankroll = 100;
+                dealerBankroll = 100;
             }
             triviaArea.style.display = "none";
+            document.getElementById("start-round-btn").disabled = false; // Re-enable Deal button
             updateDisplay();
         }
 
