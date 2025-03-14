@@ -83,12 +83,13 @@
             max-width: 600px;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             text-align: center;
+            display: none;
         }
         .money {
             color: #ffd700;
             font-weight: bold;
         }
-        #pregame-trivia {
+        #pregame-trivia, #trivia-topic-selection, #pregame-trivia-topic-selection {
             background: rgba(44, 62, 80, 0.9);
             padding: 20px;
             border-radius: 15px;
@@ -96,9 +97,8 @@
             max-width: 600px;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             text-align: center;
-            display: block;
         }
-        #pregame-trivia h2 {
+        #pregame-trivia h2, #trivia-topic-selection h2, #pregame-trivia-topic-selection h2 {
             margin-top: 0;
         }
         select {
@@ -161,9 +161,11 @@
         <button id="double-btn" onclick="doubleDown()" disabled>Double</button>
         <button id="split-btn" onclick="split()" disabled>Split</button>
     </div>
-    <div id="trivia-area" style="display:none">
-        <p>Select Trivia Topic:</p>
-        <select id="trivia-topic" onchange="showTrivia()">
+    <div id="pregame-trivia-topic-selection">
+        <h2>Pre-Game Trivia Bonus</h2>
+        <p>Select a topic to answer trivia questions and increase your starting bankroll!</p>
+        <select id="pregame-trivia-topic">
+            <option value="" disabled selected>Select a topic</option>
             <option value="History">History</option>
             <option value="Geography">Geography</option>
             <option value="Science">Science</option>
@@ -172,30 +174,38 @@
             <option value="Entertainment">Entertainment</option>
             <option value="General Knowledge">General Knowledge</option>
         </select>
-        <p id="trivia-question"></p>
-        <button id="option-0" onclick="answerTrivia(0)"></button>
-        <button id="option-1" onclick="answerTrivia(1)"></button>
-        <button id="option-2" onclick="answerTrivia(2)"></button>
-        <button id="option-3" onclick="answerTrivia(3)"></button>
+        <button onclick="selectPreGameTopic()">Confirm Topic</button>
     </div>
-    <div id="pregame-trivia">
+    <div id="pregame-trivia" style="display:none">
         <h2>Pre-Game Trivia Bonus</h2>
         <p>Answer trivia questions to increase your starting bankroll! (Up to 3 questions or until wrong)</p>
-        <p>Select Trivia Topic:</p>
-        <select id="pregame-trivia-topic" onchange="showPreGameTrivia()">
-            <option value="History">History</option>
-            <option value="Geography">Geography</option>
-            <option value="Science">Science</option>
-            <option value="Pop Culture">Pop Culture</option>
-            <option value="Sports">Sports</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="General Knowledge">General Knowledge</option>
-        </select>
         <p id="pregame-trivia-question"></p>
         <button id="pregame-option-0" onclick="answerPreGameTrivia(0)"></button>
         <button id="pregame-option-1" onclick="answerPreGameTrivia(1)"></button>
         <button id="pregame-option-2" onclick="answerPreGameTrivia(2)"></button>
         <button id="pregame-option-3" onclick="answerPreGameTrivia(3)"></button>
+    </div>
+    <div id="trivia-topic-selection" style="display:none">
+        <h2>Trivia Redemption</h2>
+        <p>Select a topic to answer a trivia question and get back in the game!</p>
+        <select id="trivia-topic">
+            <option value="" disabled selected>Select a topic</option>
+            <option value="History">History</option>
+            <option value="Geography">Geography</option>
+            <option value="Science">Science</option>
+            <option value="Pop Culture">Pop Culture</option>
+            <option value="Sports">Sports</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="General Knowledge">General Knowledge</option>
+        </select>
+        <button onclick="selectTriviaTopic()">Confirm Topic</button>
+    </div>
+    <div id="trivia-area" style="display:none">
+        <p id="trivia-question"></p>
+        <button id="option-0" onclick="answerTrivia(0)"></button>
+        <button id="option-1" onclick="answerTrivia(1)"></button>
+        <button id="option-2" onclick="answerTrivia(2)"></button>
+        <button id="option-3" onclick="answerTrivia(3)"></button>
     </div>
     <div id="message-modal">
         <div id="message-modal-content">
@@ -219,6 +229,17 @@
         let canSplit = false;
         let firstRoundStarted = false;
         let preGameTriviaAttempts = 0;
+        let selectedPreGameTopic = null;
+        let selectedTriviaTopic = null;
+        let askedQuestions = {
+            "History": [],
+            "Geography": [],
+            "Science": [],
+            "Pop Culture": [],
+            "Sports": [],
+            "Entertainment": [],
+            "General Knowledge": []
+        };
 
         const suits = ['♥', '♦', '♠', '♣'];
         const triviaQuestions = {
@@ -364,11 +385,42 @@
             }
         }
 
+        function selectPreGameTopic() {
+            const topic = document.getElementById("pregame-trivia-topic").value;
+            if (!topic) {
+                showMessage("Please select a topic!");
+                return;
+            }
+            selectedPreGameTopic = topic;
+            document.getElementById("pregame-trivia-topic").disabled = true;
+            document.getElementById("pregame-trivia-topic-selection").style.display = "none";
+            showPreGameTrivia();
+        }
+
+        function selectTriviaTopic() {
+            const topic = document.getElementById("trivia-topic").value;
+            if (!topic) {
+                showMessage("Please select a topic!");
+                return;
+            }
+            selectedTriviaTopic = topic;
+            document.getElementById("trivia-topic").disabled = true;
+            document.getElementById("trivia-topic-selection").style.display = "none";
+            showTrivia();
+        }
+
         function showPreGameTrivia() {
             if (preGameTriviaAttempts < 3 && !firstRoundStarted) {
-                const topic = document.getElementById("pregame-trivia-topic").value;
-                const questions = triviaQuestions[topic];
-                const trivia = questions[Math.floor(Math.random() * questions.length)];
+                const questions = triviaQuestions[selectedPreGameTopic];
+                const availableQuestions = questions.filter(q => !askedQuestions[selectedPreGameTopic].includes(q.question));
+                if (availableQuestions.length === 0) {
+                    showMessage("No more questions available in this topic! Starting the game.");
+                    document.getElementById("pregame-trivia").style.display = "none";
+                    document.getElementById("game-area").style.display = "block";
+                    return;
+                }
+                const trivia = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+                askedQuestions[selectedPreGameTopic].push(trivia.question);
                 document.getElementById("pregame-trivia-question").innerText = trivia.question;
                 for (let i = 0; i < 4; i++) {
                     document.getElementById(`pregame-option-${i}`).innerText = trivia.options[i];
@@ -382,8 +434,7 @@
         }
 
         function answerPreGameTrivia(choice) {
-            const topic = document.getElementById("pregame-trivia-topic").value;
-            const questions = triviaQuestions[topic];
+            const questions = triviaQuestions[selectedPreGameTopic];
             const trivia = questions.find(t => t.question === document.getElementById("pregame-trivia-question").innerText);
             if (choice === trivia.answer) {
                 bankroll += 20;
@@ -548,7 +599,7 @@
 
             if (bankroll <= 0) {
                 showMessage("You're out of money! Answer a trivia question to get back in the game!");
-                showTrivia();
+                document.getElementById("trivia-topic-selection").style.display = "block";
             }
         }
 
@@ -561,9 +612,19 @@
         }
 
         function showTrivia() {
-            const topic = document.getElementById("trivia-topic").value;
-            const questions = triviaQuestions[topic];
-            currentTrivia = questions[Math.floor(Math.random() * questions.length)];
+            const questions = triviaQuestions[selectedTriviaTopic];
+            const availableQuestions = questions.filter(q => !askedQuestions[selectedTriviaTopic].includes(q.question));
+            if (availableQuestions.length === 0) {
+                showMessage("No more questions available in this topic! Game Over! Starting fresh with $100.");
+                bankroll = 100;
+                dealerBankroll = 100;
+                document.getElementById("trivia-area").style.display = "none";
+                document.getElementById("start-round-btn").disabled = false;
+                updateDisplay();
+                return;
+            }
+            currentTrivia = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+            askedQuestions[selectedTriviaTopic].push(currentTrivia.question);
             document.getElementById("trivia-question").innerText = currentTrivia.question;
             for (let i = 0; i < 4; i++) {
                 document.getElementById(`option-${i}`).innerText = currentTrivia.options[i];
@@ -587,7 +648,9 @@
             updateDisplay();
         }
 
-        window.onload = showPreGameTrivia;
+        window.onload = function() {
+            document.getElementById("pregame-trivia-topic-selection").style.display = "block";
+        };
 
         updateDisplay();
     </script>
