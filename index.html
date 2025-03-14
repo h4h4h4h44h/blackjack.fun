@@ -78,6 +78,11 @@
         let playerHand = [];
         let dealerHand = [];
         let currentBet = 0;
+        let triviaQuestions = [
+            {question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2},
+            {question: "Who wrote 'To Kill a Mockingbird'?", options: ["Harper Lee", "Mark Twain", "J.K. Rowling", "Ernest Hemingway"], answer: 0},
+            {question: "What is the largest planet in our solar system?", options: ["Mars", "Jupiter", "Saturn", "Earth"], answer: 1}
+        ];
         
         function drawCard() {
             const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
@@ -85,12 +90,12 @@
         }
 
         function startRound() {
-            let betInput = document.getElementById("bet-amount").value;
-            currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
-            if (isNaN(currentBet) || currentBet <= 0 || currentBet > bankroll) {
-                alert("Invalid bet amount!");
+            if (currentBet > bankroll) {
+                alert("Insufficient funds for this bet!");
                 return;
             }
+            let betInput = document.getElementById("bet-amount").value;
+            currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
             bankroll -= currentBet;
             document.getElementById("bankroll").innerText = bankroll;
             playerHand = [drawCard(), drawCard()];
@@ -106,6 +111,24 @@
             document.getElementById("player-hand").innerText = playerHand.join(", ");
             document.getElementById("dealer-hand").innerText = dealerHand.join(", ");
             document.getElementById("current-bet").innerText = currentBet;
+        }
+
+        function triggerTrivia() {
+            let q = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            document.getElementById("trivia-question").innerText = q.question;
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`option-${i}`).innerText = q.options[i];
+            }
+            document.getElementById("trivia-area").style.display = "block";
+        }
+
+        function answerTrivia(choice) {
+            let q = triviaQuestions.find(q => q.question === document.getElementById("trivia-question").innerText);
+            if (q && choice === q.answer) {
+                bankroll += 10;
+                document.getElementById("bankroll").innerText = bankroll;
+            }
+            document.getElementById("trivia-area").style.display = "none";
         }
     </script>
 </body>
