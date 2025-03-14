@@ -87,6 +87,10 @@
         function startRound() {
             let betInput = document.getElementById("bet-amount").value;
             currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
+            if (isNaN(currentBet) || currentBet <= 0 || currentBet > bankroll) {
+                alert("Invalid bet amount!");
+                return;
+            }
             bankroll -= currentBet;
             document.getElementById("bankroll").innerText = bankroll;
             playerHand = [drawCard(), drawCard()];
@@ -101,6 +105,7 @@
         function updateDisplay() {
             document.getElementById("player-hand").innerText = playerHand.join(", ");
             document.getElementById("dealer-hand").innerText = dealerHand.join(", ");
+            document.getElementById("current-bet").innerText = currentBet;
         }
     </script>
 </body>
