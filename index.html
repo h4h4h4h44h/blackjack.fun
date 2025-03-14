@@ -22,7 +22,7 @@
             max-width: 800px;
             margin: 0 auto;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            display: none; /* Hidden until first round starts */
+            display: none;
         }
         .hand-container {
             margin: 15px 0;
@@ -96,12 +96,20 @@
             max-width: 600px;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             text-align: center;
-            display: block; /* Initially visible */
+            display: block;
         }
         #pregame-trivia h2 {
             margin-top: 0;
         }
-        /* Modal Styles */
+        select {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            font-size: 1em;
+        }
         #message-modal {
             display: none;
             position: fixed;
@@ -154,6 +162,16 @@
         <button id="split-btn" onclick="split()" disabled>Split</button>
     </div>
     <div id="trivia-area" style="display:none">
+        <p>Select Trivia Topic:</p>
+        <select id="trivia-topic" onchange="showTrivia()">
+            <option value="History">History</option>
+            <option value="Geography">Geography</option>
+            <option value="Science">Science</option>
+            <option value="Pop Culture">Pop Culture</option>
+            <option value="Sports">Sports</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="General Knowledge">General Knowledge</option>
+        </select>
         <p id="trivia-question"></p>
         <button id="option-0" onclick="answerTrivia(0)"></button>
         <button id="option-1" onclick="answerTrivia(1)"></button>
@@ -163,6 +181,16 @@
     <div id="pregame-trivia">
         <h2>Pre-Game Trivia Bonus</h2>
         <p>Answer trivia questions to increase your starting bankroll! (Up to 3 questions or until wrong)</p>
+        <p>Select Trivia Topic:</p>
+        <select id="pregame-trivia-topic" onchange="showPreGameTrivia()">
+            <option value="History">History</option>
+            <option value="Geography">Geography</option>
+            <option value="Science">Science</option>
+            <option value="Pop Culture">Pop Culture</option>
+            <option value="Sports">Sports</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="General Knowledge">General Knowledge</option>
+        </select>
         <p id="pregame-trivia-question"></p>
         <button id="pregame-option-0" onclick="answerPreGameTrivia(0)"></button>
         <button id="pregame-option-1" onclick="answerPreGameTrivia(1)"></button>
@@ -193,11 +221,92 @@
         let preGameTriviaAttempts = 0;
 
         const suits = ['♥', '♦', '♠', '♣'];
-        const triviaQuestions = [
-            {question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2},
-            {question: "Who wrote 'To Kill a Mockingbird'?", options: ["Harper Lee", "Mark Twain", "J.K. Rowling", "Ernest Hemingway"], answer: 0},
-            {question: "What is the largest planet in our solar system?", options: ["Mars", "Jupiter", "Saturn", "Earth"], answer: 1}
-        ];
+        const triviaQuestions = {
+            "History": [
+                {question: "In what year did the Berlin Wall fall?", options: ["1985", "1987", "1989", "1991"], answer: 2},
+                {question: "Who was the first woman to win a Nobel Prize?", options: ["Marie Curie", "Jane Addams", "Pearl Buck", "Selma Lagerlöf"], answer: 0},
+                {question: "In which year were the first modern Olympic Games held?", options: ["1896", "1900", "1888", "1912"], answer: 0},
+                {question: "Who was the first person to reach the South Pole?", options: ["Roald Amundsen", "Robert Scott", "Ernest Shackleton", "Edmund Hillary"], answer: 0},
+                {question: "Which American president appears on a one-dollar bill?", options: ["Thomas Jefferson", "George Washington", "Abraham Lincoln", "Andrew Jackson"], answer: 1},
+                {question: "What year did Serena Williams win her first Grand Slam singles title?", options: ["1997", "1999", "2001", "2003"], answer: 1},
+                {question: "Which queen had the shortest reign of King Henry VIII's wives?", options: ["Catherine of Aragon", "Anne Boleyn", "Jane Seymour", "Anne of Cleves"], answer: 3},
+                {question: "Before becoming President, Barack Obama served as a U.S. Senator from which state?", options: ["Hawaii", "Illinois", "California", "New York"], answer: 1},
+                {question: "In what year did the Titanic sink?", options: ["1910", "1912", "1914", "1916"], answer: 1},
+                {question: "Who was the first female self-made millionaire in the U.S.?", options: ["Oprah Winfrey", "Madam C.J. Walker", "Estée Lauder", "Coco Chanel"], answer: 1}
+            ],
+            "Geography": [
+                {question: "What is the capital city of Brazil?", options: ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"], answer: 2},
+                {question: "What is the largest island in the world?", options: ["Australia", "Greenland", "Borneo", "Madagascar"], answer: 1},
+                {question: "What is the northernmost capital city in the world?", options: ["Oslo", "Helsinki", "Reykjavik", "Stockholm"], answer: 2},
+                {question: "What is the longest river in Asia?", options: ["Yangtze", "Yellow River", "Mekong", "Ganges"], answer: 0},
+                {question: "What is the smallest country in the world by area?", options: ["Monaco", "Vatican City", "Liechtenstein", "San Marino"], answer: 1},
+                {question: "What is the capital city of Mongolia?", options: ["Ulaanbaatar", "Astana", "Tashkent", "Bishkek"], answer: 0},
+                {question: "Which African country was formerly known as Abyssinia?", options: ["Kenya", "Ethiopia", "Sudan", "Uganda"], answer: 1},
+                {question: "What desert covers much of northern Africa?", options: ["Kalahari", "Sahara", "Gobi", "Atacama"], answer: 1},
+                {question: "Which country has a flag that is not a quadrilateral?", options: ["Nepal", "Bhutan", "Sri Lanka", "Bangladesh"], answer: 0},
+                {question: "In which European city would you find Orly airport?", options: ["London", "Paris", "Madrid", "Rome"], answer: 1}
+            ],
+            "Science": [
+                {question: "What is the chemical symbol for silver?", options: ["Au", "Ag", "Si", "Sr"], answer: 1},
+                {question: "What is the largest bone in the human body?", options: ["Skull", "Femur", "Tibia", "Humerus"], answer: 1},
+                {question: "What is the hardest natural substance on Earth?", options: ["Diamond", "Quartz", "Topaz", "Ruby"], answer: 0},
+                {question: "What is the rarest blood type among humans?", options: ["O-positive", "AB-negative", "A-positive", "B-negative"], answer: 1},
+                {question: "What is the only planet that rotates on its side?", options: ["Venus", "Uranus", "Neptune", "Saturn"], answer: 1},
+                {question: "Who is known as the 'Father of Modern Physics'?", options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Niels Bohr"], answer: 1},
+                {question: "What animal is known to regenerate lost limbs?", options: ["Snake", "Crab", "Starfish", "Frog"], answer: 2},
+                {question: "What is the name for a type of sandstorm with strong winds and low visibility?", options: ["Haboob", "Sirocco", "Monsoon", "Tornado"], answer: 0},
+                {question: "How many senses do humans have?", options: ["Four", "Five", "Six", "Seven"], answer: 1},
+                {question: "What animal's milk is pink?", options: ["Cow", "Hippopotamus", "Goat", "Elephant"], answer: 1}
+            ],
+            "Pop Culture": [
+                {question: "What cartoon character lives in a pineapple under the sea?", options: ["Mickey Mouse", "SpongeBob SquarePants", "Donald Duck", "Bugs Bunny"], answer: 1},
+                {question: "What ABBA song was a No. 1 hit in 1977?", options: ["Mamma Mia", "Dancing Queen", "Waterloo", "Fernando"], answer: 1},
+                {question: "What is the rarest M&M color?", options: ["Red", "Blue", "Brown", "Green"], answer: 2},
+                {question: "Which actor was in the Mickey Mouse Club with Britney Spears?", options: ["Ryan Gosling", "Zac Efron", "Shia LaBeouf", "Macaulay Culkin"], answer: 0},
+                {question: "What viral video featured the song 'Dragostea Din Tei'?", options: ["Numa Numa", "Charlie Bit My Finger", "Gangnam Style", "Evolution of Dance"], answer: 0},
+                {question: "What is the highest-grossing film of all time (without inflation)?", options: ["Titanic", "Avatar", "Avengers: Endgame", "Star Wars: The Force Awakens"], answer: 1},
+                {question: "Who anonymously sends Harry his father’s Invisibility Cloak?", options: ["Snape", "Dumbledore", "Hagrid", "McGonagall"], answer: 1},
+                {question: "What does 'www' stand for in a website browser?", options: ["World Wide Web", "Web World Wide", "Wide Web World", "World Web Wide"], answer: 0},
+                {question: "At the 2015 Met Gala, how long was Rihanna's yellow cape train?", options: ["5 feet", "10 feet", "15 feet", "20 feet"], answer: 2},
+                {question: "What is the name of Sherlock Holmes' assistant?", options: ["Watson", "Hudson", "Lestrade", "Moriarty"], answer: 0}
+            ],
+            "Sports": [
+                {question: "Which two countries have not missed a modern-day Olympics?", options: ["USA and Canada", "Greece and Australia", "France and Germany", "Japan and China"], answer: 1},
+                {question: "Which NFL team went a whole season undefeated, including the Super Bowl?", options: ["Miami Dolphins", "New England Patriots", "Pittsburgh Steelers", "Dallas Cowboys"], answer: 0},
+                {question: "Tennis star Serena Williams won which major while pregnant?", options: ["Wimbledon", "US Open", "French Open", "Australian Open"], answer: 3},
+                {question: "How often are the Olympics held?", options: ["Every two years", "Every four years", "Every six years", "Every year"], answer: 1},
+                {question: "Which country drinks the most coffee per person?", options: ["Finland", "Italy", "Colombia", "Brazil"], answer: 0},
+                {question: "What is the only American Football penalty that results in a 15-yard loss?", options: ["Holding", "Pass Interference", "Unsportsmanlike Conduct", "False Start"], answer: 2},
+                {question: "Which country hosts the most Formula 1 races in a season?", options: ["Italy", "Monaco", "USA", "UK"], answer: 0},
+                {question: "Who holds the record for the most home runs in MLB history?", options: ["Babe Ruth", "Hank Aaron", "Barry Bonds", "Alex Rodriguez"], answer: 2},
+                {question: "In what year did the first Super Bowl take place?", options: ["1960", "1967", "1970", "1975"], answer: 1},
+                {question: "Which sport is known as 'the beautiful game'?", options: ["Basketball", "Soccer", "Tennis", "Rugby"], answer: 1}
+            ],
+            "Entertainment": [
+                {question: "What was the first toy advertised on television?", options: ["Mr. Potato Head", "Barbie", "Slinky", "GI Joe"], answer: 0},
+                {question: "What were the four main characters' names in 'Golden Girls'?", options: ["Dorothy, Rose, Blanche, Sophia", "Rachel, Monica, Phoebe, Chandler", "Carrie, Samantha, Charlotte, Miranda", "Lucy, Ethel, Fred, Ricky"], answer: 0},
+                {question: "What is the name of the district in New York famous for musicals?", options: ["SoHo", "Broadway", "Tribeca", "Chelsea"], answer: 1},
+                {question: "What miniseries about WWII was created by Tom Hanks and Steven Spielberg?", options: ["The Pacific", "Band of Brothers", "Generation Kill", "Overlord"], answer: 1},
+                {question: "What is the name of the toy cowboy in 'Toy Story'?", options: ["Buzz Lightyear", "Woody", "Jessie", "Slinky Dog"], answer: 1},
+                {question: "Who was the only actor nominated for an Oscar in the 'Lord of the Rings' trilogy?", options: ["Elijah Wood", "Ian McKellen", "Viggo Mortensen", "Sean Astin"], answer: 1},
+                {question: "What is the name of Mickey Mouse’s girlfriend?", options: ["Daisy Duck", "Minnie Mouse", "Clarabelle Cow", "Pluto"], answer: 1},
+                {question: "What famous play features a character named Romeo?", options: ["Hamlet", "Macbeth", "Romeo and Juliet", "Othello"], answer: 2},
+                {question: "What does S.W.O.R.D. stand for in 'WandaVision'?", options: ["Sentient Weapon Observation Response Division", "Strategic World Operations Response Division", "Space Weapon Observation and Research Division", "Superhuman Weapon Oversight and Response Division"], answer: 0},
+                {question: "What was the first feature-length animated film ever released?", options: ["Cinderella", "Snow White and the Seven Dwarfs", "Pinocchio", "Dumbo"], answer: 1}
+            ],
+            "General Knowledge": [
+                {question: "What is the term for a group of flamingos?", options: ["Flock", "Gaggle", "Flamboyance", "Herd"], answer: 2},
+                {question: "What is the official animal of Scotland?", options: ["Lion", "Unicorn", "Stag", "Eagle"], answer: 1},
+                {question: "What fruit is known as the 'king of fruits' and banned in many places due to its smell?", options: ["Mango", "Durian", "Jackfruit", "Papaya"], answer: 1},
+                {question: "What is the fear of clowns called?", options: ["Arachnophobia", "Coulrophobia", "Acrophobia", "Claustrophobia"], answer: 1},
+                {question: "What do pandas primarily eat?", options: ["Fish", "Meat", "Bamboo", "Grass"], answer: 2},
+                {question: "What does a funambulist walk on?", options: ["A Tight Rope", "A Balance Beam", "A Trampoline", "A Slackline"], answer: 0},
+                {question: "What is the main ingredient in guacamole?", options: ["Tomatillo", "Tomato", "Avocado", "Pepper"], answer: 2},
+                {question: "How many noses does a slug have?", options: ["One", "Two", "Four", "Six"], answer: 2},
+                {question: "What is the longest word in the English language?", options: ["Antidisestablishmentarianism", "Hippopotomonstrosesquippedaliophobia", "Floccinaucinihilipilification", "Supercalifragilisticexpialidocious"], answer: 1},
+                {question: "What country holds the record for the longest dance party (55 hours)?", options: ["Brazil", "Ireland", "India", "Spain"], answer: 1}
+            ]
+        };
 
         function showMessage(message) {
             document.getElementById("message-text").innerText = message;
@@ -257,7 +366,9 @@
 
         function showPreGameTrivia() {
             if (preGameTriviaAttempts < 3 && !firstRoundStarted) {
-                const trivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+                const topic = document.getElementById("pregame-trivia-topic").value;
+                const questions = triviaQuestions[topic];
+                const trivia = questions[Math.floor(Math.random() * questions.length)];
                 document.getElementById("pregame-trivia-question").innerText = trivia.question;
                 for (let i = 0; i < 4; i++) {
                     document.getElementById(`pregame-option-${i}`).innerText = trivia.options[i];
@@ -271,7 +382,9 @@
         }
 
         function answerPreGameTrivia(choice) {
-            const trivia = triviaQuestions.find(t => t.question === document.getElementById("pregame-trivia-question").innerText);
+            const topic = document.getElementById("pregame-trivia-topic").value;
+            const questions = triviaQuestions[topic];
+            const trivia = questions.find(t => t.question === document.getElementById("pregame-trivia-question").innerText);
             if (choice === trivia.answer) {
                 bankroll += 20;
                 preGameTriviaAttempts++;
@@ -296,7 +409,7 @@
             playerHand = [drawCard(), drawCard()];
             dealerHand = [drawCard(), drawCard()];
             gameInProgress = true;
-            firstRoundStarted = true; // Mark first round as started
+            firstRoundStarted = true;
             isSplit = false;
             splitHand = [];
             
@@ -448,13 +561,14 @@
         }
 
         function showTrivia() {
-            const triviaArea = document.getElementById("trivia-area");
-            currentTrivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            const topic = document.getElementById("trivia-topic").value;
+            const questions = triviaQuestions[topic];
+            currentTrivia = questions[Math.floor(Math.random() * questions.length)];
             document.getElementById("trivia-question").innerText = currentTrivia.question;
             for (let i = 0; i < 4; i++) {
                 document.getElementById(`option-${i}`).innerText = currentTrivia.options[i];
             }
-            triviaArea.style.display = "block";
+            document.getElementById("trivia-area").style.display = "block";
             document.getElementById("start-round-btn").disabled = true;
         }
 
@@ -473,7 +587,6 @@
             updateDisplay();
         }
 
-        // Initialize pre-game trivia
         window.onload = showPreGameTrivia;
 
         updateDisplay();
