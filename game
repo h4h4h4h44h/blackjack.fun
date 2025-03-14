@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blackjack Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #game-area { margin-top: 20px; }
+        .card { display: inline-block; margin: 5px; padding: 10px; border: 1px solid black; }
+        button { margin: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Blackjack</h1>
+    <div id="game-area">
+        <p><strong>Your Hand:</strong> <span id="player-hand"></span> (<span id="player-total"></span>)</p>
+        <p><strong>Dealer's Hand:</strong> <span id="dealer-hand"></span> (<span id="dealer-total"></span>)</p>
+        <p><strong>Your Bankroll:</strong> $<span id="bankroll">100</span></p>
+        <p><strong>Dealer's Bankroll:</strong> $<span id="dealer-bankroll">100</span></p>
+        <p><strong>Your Bet:</strong> $<span id="current-bet">0</span></p>
+        <button onclick="startRound()">Start Round</button>
+        <button onclick="hit()">Hit</button>
+        <button onclick="stand()">Stand</button>
+        <button onclick="doubleDown()">Double Down</button>
+        <button onclick="split()">Split</button>
+    </div>
+    <div id="trivia-area" style="display: none;">
+        <p id="trivia-question"></p>
+        <button onclick="answerTrivia(0)">A</button>
+        <button onclick="answerTrivia(1)">B</button>
+        <button onclick="answerTrivia(2)">C</button>
+        <button onclick="answerTrivia(3)">D</button>
+    </div>
+    <script>
+        let bankroll = 100;
+        let dealerBankroll = 100;
+        let triviaProgress = 0;
+        let playerHand = [];
+        let dealerHand = [];
+        let currentBet = 0;
+        
+        function startRound() {
+            playerHand = [drawCard(), drawCard()];
+            dealerHand = [drawCard(), drawCard()];
+            currentBet = 10;
+            bankroll -= currentBet;
+            updateDisplay();
+        }
+
+        function hit() {
+            playerHand.push(drawCard());
+            updateDisplay();
+            checkBust();
+        }
+        
+        function stand() {
+            dealerTurn();
+        }
+
+        function doubleDown() {
+            if (bankroll >= currentBet) {
+                bankroll -= currentBet;
+                currentBet *= 2;
+                hit();
+                stand();
+            }
+        }
+
+        function split() {
+            alert("Split function to be implemented.");
+        }
+
+        function drawCard() {
+            return Math.floor(Math.random() * 10) + 1;
+        }
+        
+        function updateDisplay() {
+            document.getElementById("player-hand").innerText = playerHand.join(", ");
+            document.getElementById("player-total").innerText = playerHand.reduce((a, b) => a + b, 0);
+            document.getElementById("dealer-hand").innerText = dealerHand[0] + ", ?";
+            document.getElementById("dealer-total").innerText = "?";
+            document.getElementById("bankroll").innerText = bankroll;
+            document.getElementById("current-bet").innerText = currentBet;
+        }
+        
+        function checkBust() {
+            let total = playerHand.reduce((a, b) => a + b, 0);
+            if (total > 21) {
+                alert("Bust! You lose.");
+                startTrivia();
+            }
+        }
+        
+        function dealerTurn() {
+            let dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
+            while (dealerTotal < 17) {
+                dealerHand.push(drawCard());
+                dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
+            }
+            determineWinner();
+        }
+        
+        function determineWinner() {
+            let playerTotal = playerHand.reduce((a, b) => a + b, 0);
+            let dealerTotal = dealerHand.reduce((a, b) => a + b, 0);
+            if (dealerTotal > 21 || playerTotal > dealerTotal) {
+                bankroll += currentBet * 2;
+                alert("You win!");
+            } else if (playerTotal < dealerTotal) {
+                alert("Dealer wins!");
+                startTrivia();
+            } else {
+                bankroll += currentBet;
+                alert("It's a tie!");
+            }
+            updateDisplay();
+        }
+        
+        function startTrivia() {
+            document.getElementById("trivia-area").style.display = "block";
+            document.getElementById("trivia-question").innerText = "What is the capital of Canada?";
+        }
+        
+        function answerTrivia(option) {
+            if (option === 2) { // Correct answer
+                triviaProgress++;
+                if (triviaProgress >= 3) {
+                    bankroll += 10;
+                    triviaProgress = 0;
+                    document.getElementById("bankroll").innerText = bankroll;
+                    alert("You earned $10!");
+                } else {
+                    alert("Correct! Keep going.");
+                }
+            } else {
+                triviaProgress = Math.max(0, triviaProgress - 1);
+                alert("Wrong! You lost some progress.");
+            }
+        }
+    </script>
+</body>
+</html>
