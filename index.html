@@ -89,7 +89,7 @@
             color: #ffd700;
             font-weight: bold;
         }
-        #welcome-screen, #pregame-trivia, #trivia-topic-selection, #pregame-trivia-topic-selection {
+        #welcome-screen, #pregame-trivia, #trivia-topic-selection, #pregame-trivia-topic-selection, #table-menu {
             background: rgba(44, 62, 80, 0.9);
             padding: 20px;
             border-radius: 15px;
@@ -98,14 +98,14 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             text-align: center;
         }
-        #welcome-screen h2, #pregame-trivia h2, #trivia-topic-selection h2, #pregame-trivia-topic-selection h2 {
+        #welcome-screen h2, #pregame-trivia h2, #trivia-topic-selection h2, #pregame-trivia-topic-selection h2, #table-menu h2 {
             margin-top: 0;
         }
-        .topic-buttons button {
+        .topic-buttons button, .preset-buttons button {
             background: linear-gradient(45deg, #3498db, #2980b9);
             margin: 5px;
         }
-        .topic-buttons button:hover {
+        .preset-buttons button:hover, .topic-buttons button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
@@ -141,6 +141,17 @@
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
+        #table-menu button {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+        #table-menu button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #table-menu button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -157,15 +168,35 @@
             <p id="split-hand" style="display:none"><strong>Split Hand:</strong> <span id="split-hand-cards"></span> (<span id="split-total"></span>)</p>
         </div>
         <p><strong>Dealer's Hand:</strong> <span id="dealer-hand"></span> (<span id="dealer-total"></span>)</p>
+        <p><strong>Current Table Level:</strong> <span id="table-level">1</span> (Max Bet: $<span id="max-bet">1000</span>)</p>
         <p><strong>Your Bankroll:</strong> <span class="money">$<span id="bankroll">100</span></span></p>
         <p><strong>Dealer's Bankroll:</strong> <span class="money">$<span id="dealer-bankroll">100</span></span></p>
         <p><strong>Your Bet:</strong> <span class="money">$<span id="current-bet">0</span></span></p>
-        <input type="number" id="bet-amount" min="1" max="10000" value="10">
+        <input type="number" id="bet-amount" min="1" value="10">
+        <div class="preset-buttons">
+            <button onclick="setBet(50)">$50</button>
+            <button onclick="setBet(100)">$100</button>
+            <button onclick="setBet(200)">$200</button>
+            <button onclick="setBet(500)">$500</button>
+            <button onclick="setBet(1000)">$1000</button>
+            <button onclick="setMaxBet()">Max Bet</button>
+        </div>
         <button onclick="startRound()" id="start-round-btn">Deal</button>
         <button id="hit-btn" onclick="hit()" disabled>Hit</button>
         <button id="stand-btn" onclick="stand()" disabled>Stand</button>
         <button id="double-btn" onclick="doubleDown()" disabled>Double</button>
         <button id="split-btn" onclick="split()" disabled>Split</button>
+        <button onclick="showTableMenu()">Change Table</button>
+    </div>
+    <div id="table-menu" style="display:none">
+        <h2>Blackjack Tables</h2>
+        <p>Purchase access to higher-level tables with increased max bet limits!</p>
+        <p><strong>Level 1:</strong> Max Bet $1,000 (Unlocked by default)</p>
+        <p><strong>Level 2:</strong> Max Bet $5,000 (Cost: $500) <button id="buy-level-2" onclick="buyTable(2, 500, 5000)">Buy</button></p>
+        <p><strong>Level 3:</strong> Max Bet $10,000 (Cost: $1,000) <button id="buy-level-3" onclick="buyTable(3, 1000, 10000)">Buy</button></p>
+        <p><strong>Level 4:</strong> Max Bet $25,000 (Cost: $2,500) <button id="buy-level-4" onclick="buyTable(4, 2500, 25000)">Buy</button></p>
+        <p><strong>Level 5:</strong> Max Bet $50,000 (Cost: $5,000) <button id="buy-level-5" onclick="buyTable(5, 5000, 50000)">Buy</button></p>
+        <button onclick="hideTableMenu()">Back to Game</button>
     </div>
     <div id="pregame-trivia-topic-selection" style="display:none">
         <h2>Pre-Game Trivia Bonus</h2>
@@ -235,6 +266,9 @@
         let preGameTriviaAttempts = 0;
         let selectedPreGameTopic = null;
         let selectedTriviaTopic = null;
+        let currentTableLevel = 1;
+        let maxBet = 1000;
+        let unlockedTables = [1]; // Level 1 is unlocked by default
         let askedQuestions = {
             "History": [],
             "Geography": [],
@@ -359,15 +393,74 @@
         function skipToBlackjack() {
             document.getElementById("welcome-screen").style.display = "none";
             document.getElementById("game-area").style.display = "block";
-            firstRoundStarted = true; // Allow the game to proceed without trivia
+            firstRoundStarted = true;
             updateDisplay();
+        }
+
+        function showTableMenu() {
+            if (gameInProgress) {
+                showMessage("Finish the current round before changing tables!");
+                return;
+            }
+            document.getElementById("game-area").style.display = "none";
+            document.getElementById("table-menu").style.display = "block";
+            updateTableMenu();
+        }
+
+        function hideTableMenu() {
+            document.getElementById("table-menu").style.display = "none";
+            document.getElementById("game-area").style.display = "block";
+            updateDisplay();
+        }
+
+        function updateTableMenu() {
+            for (let level = 2; level <= 5; level++) {
+                const button = document.getElementById(`buy-level-${level}`);
+                if (unlockedTables.includes(level)) {
+                    button.innerText = "Unlocked";
+                    button.disabled = true;
+                } else {
+                    button.innerText = "Buy";
+                    button.disabled = false;
+                }
+            }
+        }
+
+        function buyTable(level, cost, newMaxBet) {
+            if (bankroll < cost) {
+                showMessage(`You need $${cost} to unlock this table!`);
+                return;
+            }
+            if (unlockedTables.includes(level)) {
+                showMessage(`You already unlocked Table Level ${level}!`);
+                return;
+            }
+            bankroll -= cost;
+            unlockedTables.push(level);
+            currentTableLevel = level;
+            maxBet = newMaxBet;
+            updateDisplay();
+            updateTableMenu();
+            showMessage(`Table Level ${level} unlocked! Max bet is now $${maxBet}.`);
+        }
+
+        function setBet(amount) {
+            const betInput = document.getElementById("bet-amount");
+            const cappedAmount = Math.min(amount, maxBet, bankroll);
+            betInput.value = cappedAmount;
+        }
+
+        function setMaxBet() {
+            const betInput = document.getElementById("bet-amount");
+            const maxPossibleBet = Math.min(maxBet, bankroll);
+            betInput.value = maxPossibleBet;
         }
 
         function takeWinnings() {
             document.getElementById("pregame-trivia").style.display = "none";
             document.getElementById("game-area").style.display = "block";
             document.getElementById("message-modal").style.display = "none";
-            firstRoundStarted = true; // Allow the game to proceed
+            firstRoundStarted = true;
             showMessage("Starting Blackjack with your bankroll of $" + bankroll + "!");
             updateDisplay();
         }
@@ -417,6 +510,8 @@
                 cardValue(dealerHand[0]) : calculateHandTotal(dealerHand);
             document.getElementById("bankroll").innerText = bankroll;
             document.getElementById("dealer-bankroll").innerText = dealerBankroll;
+            document.getElementById("table-level").innerText = currentTableLevel;
+            document.getElementById("max-bet").innerText = maxBet;
             if (isSplit) {
                 document.getElementById("split-hand").style.display = "block";
                 document.getElementById("split-hand-cards").innerHTML = splitHand.map(formatCard).join("");
@@ -491,8 +586,8 @@
         function startRound() {
             if (gameInProgress) return;
             let betInput = parseInt(document.getElementById("bet-amount").value);
-            if (isNaN(betInput) || betInput < 1 || betInput > bankroll) {
-                showMessage("Please enter a valid bet amount!");
+            if (isNaN(betInput) || betInput < 1 || betInput > bankroll || betInput > maxBet) {
+                showMessage(`Please enter a valid bet amount! (Min: $1, Max: $${maxBet}, Bankroll: $${bankroll})`);
                 return;
             }
             currentBet = betInput;
@@ -574,7 +669,7 @@
         }
 
         function endRound(blackjack = false) {
-            gameInProgress = false; // Reset gameInProgress to allow new rounds
+            gameInProgress = false;
             const playerTotal = calculateHandTotal(playerHand);
             const splitTotal = calculateHandTotal(splitHand);
             const dealerTotal = calculateHandTotal(dealerHand);
@@ -675,8 +770,8 @@
         function answerTrivia(choice) {
             const triviaArea = document.getElementById("trivia-area");
             if (choice === currentTrivia.answer) {
-                bankroll += 20;
-                showMessage("Correct! You've won $20 to continue playing!");
+                bankroll += 150; // Changed from $20 to $150 for redemption trivia
+                showMessage("Correct! You've won $150 to continue playing!");
             } else {
                 bankroll = 100;
                 dealerBankroll = 100;
