@@ -60,10 +60,10 @@
         <p><strong>Your Bet:</strong> $<span id="current-bet">0</span></p>
         <input type="number" id="bet-amount" min="1" max="10000" value="10">
         <button onclick="startRound()" style="display: inline-block;">Start Round</button>
-        <button id="hit-btn" onclick="hit()">Hit</button>
-        <button id="stand-btn" onclick="stand()">Stand</button>
-        <button id="double-btn" onclick="doubleDown()">Double Down</button>
-        <button id="split-btn" onclick="split()">Split</button>
+        <button id="hit-btn" onclick="hit()" disabled>Hit</button>
+        <button id="stand-btn" onclick="stand()" disabled>Stand</button>
+        <button id="double-btn" onclick="doubleDown()" disabled>Double Down</button>
+        <button id="split-btn" onclick="split()" disabled>Split</button>
     </div>
     <div id="trivia-area">
         <p id="trivia-question"></p>
@@ -84,9 +84,16 @@
             { question: "What is the capital of Canada?", options: ["Toronto", "Vancouver", "Ottawa", "Montreal"], answer: 2 },
             { question: "Which planet is known as the Red Planet?", options: ["Earth", "Venus", "Mars", "Jupiter"], answer: 2 },
             { question: "How many continents are there on Earth?", options: ["5", "6", "7", "8"], answer: 2 },
-            { question: "What is the chemical symbol for gold?", options: ["Au", "Ag", "Pb", "Fe"], answer: 0 }
+            { question: "What is the chemical symbol for gold?", options: ["Au", "Ag", "Pb", "Fe"], answer: 0 },
+            { question: "Who wrote 'To Kill a Mockingbird'?", options: ["Harper Lee", "Mark Twain", "J.K. Rowling", "Ernest Hemingway"], answer: 0 },
+            { question: "What is the square root of 64?", options: ["6", "7", "8", "9"], answer: 2 }
         ];
         
+        function drawCard() {
+            const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+            return values[Math.floor(Math.random() * values.length)];
+        }
+
         function startRound() {
             let betInput = document.getElementById("bet-amount").value;
             currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
@@ -94,20 +101,21 @@
             playerHand = [drawCard(), drawCard()];
             dealerHand = [drawCard(), drawCard()];
             updateDisplay();
-            document.getElementById("hit-btn").style.display = "inline-block";
-            document.getElementById("stand-btn").style.display = "inline-block";
-            document.getElementById("double-btn").style.display = "inline-block";
-            document.getElementById("split-btn").style.display = "inline-block";
+            document.getElementById("hit-btn").disabled = false;
+            document.getElementById("stand-btn").disabled = false;
+            document.getElementById("double-btn").disabled = false;
+            document.getElementById("split-btn").disabled = false;
         }
 
         function startTrivia() {
+            if (bankroll > 0) return;
             document.getElementById("trivia-area").style.display = "block";
             let qIndex = Math.floor(Math.random() * triviaQuestions.length);
             let question = triviaQuestions[qIndex];
             document.getElementById("trivia-question").innerText = question.question;
             for (let i = 0; i < 4; i++) {
                 document.getElementById(`option-${i}`).innerText = question.options[i];
-                document.getElementById(`option-${i}`).setAttribute("data-answer", i === question.answer);
+                document.getElementById(`option-${i}`).setAttribute("data-answer", i == question.answer);
             }
         }
 
@@ -120,6 +128,7 @@
                     triviaProgress = 0;
                     document.getElementById("bankroll").innerText = bankroll;
                     alert("You earned $10!");
+                    document.getElementById("trivia-area").style.display = "none";
                 } else {
                     alert("Correct! Keep going.");
                 }
