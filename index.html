@@ -89,7 +89,7 @@
             color: #ffd700;
             font-weight: bold;
         }
-        #pregame-trivia, #trivia-topic-selection, #pregame-trivia-topic-selection {
+        #welcome-screen, #pregame-trivia, #trivia-topic-selection, #pregame-trivia-topic-selection {
             background: rgba(44, 62, 80, 0.9);
             padding: 20px;
             border-radius: 15px;
@@ -98,17 +98,16 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             text-align: center;
         }
-        #pregame-trivia h2, #trivia-topic-selection h2, #pregame-trivia-topic-selection h2 {
+        #welcome-screen h2, #pregame-trivia h2, #trivia-topic-selection h2, #pregame-trivia-topic-selection h2 {
             margin-top: 0;
         }
-        select {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            font-size: 1em;
+        .topic-buttons button {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            margin: 5px;
+        }
+        .topic-buttons button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
         #message-modal {
             display: none;
@@ -146,6 +145,12 @@
 </head>
 <body>
     <h1>Blackjack Royale</h1>
+    <div id="welcome-screen">
+        <h2>Welcome to Blackjack Royale!</h2>
+        <p>Would you like to answer trivia questions for a starting bonus, or go straight to the game?</p>
+        <button onclick="startPreGameTrivia()">Play Trivia for Bonus</button>
+        <button onclick="skipToBlackjack()">Skip to Blackjack</button>
+    </div>
     <div id="game-area">
         <div class="hand-container">
             <p><strong>Your Hand:</strong> <span id="player-hand"></span> (<span id="player-total"></span>)</p>
@@ -162,20 +167,18 @@
         <button id="double-btn" onclick="doubleDown()" disabled>Double</button>
         <button id="split-btn" onclick="split()" disabled>Split</button>
     </div>
-    <div id="pregame-trivia-topic-selection">
+    <div id="pregame-trivia-topic-selection" style="display:none">
         <h2>Pre-Game Trivia Bonus</h2>
         <p>Select a topic to answer trivia questions and increase your starting bankroll!</p>
-        <select id="pregame-trivia-topic">
-            <option value="" disabled selected>Select a topic</option>
-            <option value="History">History</option>
-            <option value="Geography">Geography</option>
-            <option value="Science">Science</option>
-            <option value="Pop Culture">Pop Culture</option>
-            <option value="Sports">Sports</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="General Knowledge">General Knowledge</option>
-        </select>
-        <button onclick="selectPreGameTopic()">Confirm Topic</button>
+        <div class="topic-buttons">
+            <button onclick="selectPreGameTopic('History')">History</button>
+            <button onclick="selectPreGameTopic('Geography')">Geography</button>
+            <button onclick="selectPreGameTopic('Science')">Science</button>
+            <button onclick="selectPreGameTopic('Pop Culture')">Pop Culture</button>
+            <button onclick="selectPreGameTopic('Sports')">Sports</button>
+            <button onclick="selectPreGameTopic('Entertainment')">Entertainment</button>
+            <button onclick="selectPreGameTopic('General Knowledge')">General Knowledge</button>
+        </div>
     </div>
     <div id="pregame-trivia" style="display:none">
         <h2>Pre-Game Trivia Bonus</h2>
@@ -189,17 +192,15 @@
     <div id="trivia-topic-selection" style="display:none">
         <h2>Trivia Redemption</h2>
         <p>Select a topic to answer a trivia question and get back in the game!</p>
-        <select id="trivia-topic">
-            <option value="" disabled selected>Select a topic</option>
-            <option value="History">History</option>
-            <option value="Geography">Geography</option>
-            <option value="Science">Science</option>
-            <option value="Pop Culture">Pop Culture</option>
-            <option value="Sports">Sports</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="General Knowledge">General Knowledge</option>
-        </select>
-        <button onclick="selectTriviaTopic()">Confirm Topic</button>
+        <div class="topic-buttons">
+            <button onclick="selectTriviaTopic('History')">History</button>
+            <button onclick="selectTriviaTopic('Geography')">Geography</button>
+            <button onclick="selectTriviaTopic('Science')">Science</button>
+            <button onclick="selectTriviaTopic('Pop Culture')">Pop Culture</button>
+            <button onclick="selectTriviaTopic('Sports')">Sports</button>
+            <button onclick="selectTriviaTopic('Entertainment')">Entertainment</button>
+            <button onclick="selectTriviaTopic('General Knowledge')">General Knowledge</button>
+        </div>
     </div>
     <div id="trivia-area" style="display:none">
         <p id="trivia-question"></p>
@@ -350,10 +351,23 @@
             document.getElementById("message-modal").style.display = "none";
         }
 
+        function startPreGameTrivia() {
+            document.getElementById("welcome-screen").style.display = "none";
+            document.getElementById("pregame-trivia-topic-selection").style.display = "block";
+        }
+
+        function skipToBlackjack() {
+            document.getElementById("welcome-screen").style.display = "none";
+            document.getElementById("game-area").style.display = "block";
+            firstRoundStarted = true; // Allow the game to proceed without trivia
+            updateDisplay();
+        }
+
         function takeWinnings() {
             document.getElementById("pregame-trivia").style.display = "none";
             document.getElementById("game-area").style.display = "block";
             document.getElementById("message-modal").style.display = "none";
+            firstRoundStarted = true; // Allow the game to proceed
             showMessage("Starting Blackjack with your bankroll of $" + bankroll + "!");
             updateDisplay();
         }
@@ -410,26 +424,14 @@
             }
         }
 
-        function selectPreGameTopic() {
-            const topic = document.getElementById("pregame-trivia-topic").value;
-            if (!topic) {
-                showMessage("Please select a topic!");
-                return;
-            }
+        function selectPreGameTopic(topic) {
             selectedPreGameTopic = topic;
-            document.getElementById("pregame-trivia-topic").disabled = true;
             document.getElementById("pregame-trivia-topic-selection").style.display = "none";
             showPreGameTrivia();
         }
 
-        function selectTriviaTopic() {
-            const topic = document.getElementById("trivia-topic").value;
-            if (!topic) {
-                showMessage("Please select a topic!");
-                return;
-            }
+        function selectTriviaTopic(topic) {
             selectedTriviaTopic = topic;
-            document.getElementById("trivia-topic").disabled = true;
             document.getElementById("trivia-topic-selection").style.display = "none";
             showTrivia();
         }
@@ -442,6 +444,7 @@
                     showMessage("No more questions available in this topic! Starting the game.");
                     document.getElementById("pregame-trivia").style.display = "none";
                     document.getElementById("game-area").style.display = "block";
+                    firstRoundStarted = true;
                     updateDisplay();
                     return;
                 }
@@ -455,6 +458,7 @@
             } else if (!firstRoundStarted) {
                 document.getElementById("pregame-trivia").style.display = "none";
                 document.getElementById("game-area").style.display = "block";
+                firstRoundStarted = true;
                 showMessage("Pre-game trivia complete! Start your first round.");
                 updateDisplay();
             }
@@ -472,18 +476,20 @@
                     showMessage(`Correct! Your bankroll is now $${bankroll}. You've answered all 3 questions! Starting Blackjack.`);
                     document.getElementById("pregame-trivia").style.display = "none";
                     document.getElementById("game-area").style.display = "block";
+                    firstRoundStarted = true;
                     updateDisplay();
                 }
             } else {
                 showMessage("Wrong answer! Pre-game trivia ends. Start your game!");
                 document.getElementById("pregame-trivia").style.display = "none";
                 document.getElementById("game-area").style.display = "block";
+                firstRoundStarted = true;
                 updateDisplay();
             }
         }
 
         function startRound() {
-            if (gameInProgress || firstRoundStarted) return;
+            if (gameInProgress) return;
             let betInput = parseInt(document.getElementById("bet-amount").value);
             if (isNaN(betInput) || betInput < 1 || betInput > bankroll) {
                 showMessage("Please enter a valid bet amount!");
@@ -494,7 +500,6 @@
             playerHand = [drawCard(), drawCard()];
             dealerHand = [drawCard(), drawCard()];
             gameInProgress = true;
-            firstRoundStarted = true;
             isSplit = false;
             splitHand = [];
             
@@ -569,7 +574,7 @@
         }
 
         function endRound(blackjack = false) {
-            gameInProgress = false;
+            gameInProgress = false; // Reset gameInProgress to allow new rounds
             const playerTotal = calculateHandTotal(playerHand);
             const splitTotal = calculateHandTotal(splitHand);
             const dealerTotal = calculateHandTotal(dealerHand);
@@ -683,7 +688,7 @@
         }
 
         window.onload = function() {
-            document.getElementById("pregame-trivia-topic-selection").style.display = "block";
+            document.getElementById("welcome-screen").style.display = "block";
         };
 
         updateDisplay();
