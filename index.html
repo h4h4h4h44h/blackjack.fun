@@ -6,7 +6,7 @@
         body { 
             font-family: Arial, sans-serif; 
             text-align: center; 
-            background-color: #2c3e50;
+            background-color: #8B0000;
             color: white;
         }
         #game-area { 
@@ -58,7 +58,7 @@
         <p><strong>Dealer's Bankroll:</strong> $<span id="dealer-bankroll">100</span></p>
         <p><strong>Your Bet:</strong> $<span id="current-bet">0</span></p>
         <input type="number" id="bet-amount" min="1" max="10000" value="10">
-        <button onclick="startRound()">Start Round</button>
+        <button onclick="startRound()" id="start-round-btn">Start Round</button>
         <button id="hit-btn" onclick="hit()" disabled>Hit</button>
         <button id="stand-btn" onclick="stand()" disabled>Stand</button>
         <button id="double-btn" onclick="doubleDown()" disabled>Double Down</button>
@@ -94,6 +94,7 @@
                 alert("Insufficient funds for this bet!");
                 return;
             }
+            document.getElementById("start-round-btn").disabled = true;
             let betInput = document.getElementById("bet-amount").value;
             currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
             bankroll -= currentBet;
@@ -111,24 +112,6 @@
             document.getElementById("player-hand").innerText = playerHand.join(", ");
             document.getElementById("dealer-hand").innerText = dealerHand.join(", ");
             document.getElementById("current-bet").innerText = currentBet;
-        }
-
-        function triggerTrivia() {
-            let q = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            document.getElementById("trivia-question").innerText = q.question;
-            for (let i = 0; i < 4; i++) {
-                document.getElementById(`option-${i}`).innerText = q.options[i];
-            }
-            document.getElementById("trivia-area").style.display = "block";
-        }
-
-        function answerTrivia(choice) {
-            let q = triviaQuestions.find(q => q.question === document.getElementById("trivia-question").innerText);
-            if (q && choice === q.answer) {
-                bankroll += 10;
-                document.getElementById("bankroll").innerText = bankroll;
-            }
-            document.getElementById("trivia-area").style.display = "none";
         }
     </script>
 </body>
