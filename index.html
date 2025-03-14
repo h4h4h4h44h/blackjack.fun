@@ -35,6 +35,7 @@
             cursor: pointer;
             font-size: 16px;
             border-radius: 5px;
+            display: none;
         }
         button:hover { 
             background-color: #c0392b; 
@@ -44,7 +45,7 @@
             padding: 20px;
             background: #16a085;
             border-radius: 10px;
-            display: inline-block;
+            display: none;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
         }
     </style>
@@ -57,13 +58,14 @@
         <p><strong>Your Bankroll:</strong> $<span id="bankroll">100</span></p>
         <p><strong>Dealer's Bankroll:</strong> $<span id="dealer-bankroll">100</span></p>
         <p><strong>Your Bet:</strong> $<span id="current-bet">0</span></p>
-        <button onclick="startRound()">Start Round</button>
-        <button onclick="hit()">Hit</button>
-        <button onclick="stand()">Stand</button>
-        <button onclick="doubleDown()">Double Down</button>
-        <button onclick="split()">Split</button>
+        <input type="number" id="bet-amount" min="1" max="10000" value="10">
+        <button onclick="startRound()" style="display: inline-block;">Start Round</button>
+        <button id="hit-btn" onclick="hit()">Hit</button>
+        <button id="stand-btn" onclick="stand()">Stand</button>
+        <button id="double-btn" onclick="doubleDown()">Double Down</button>
+        <button id="split-btn" onclick="split()">Split</button>
     </div>
-    <div id="trivia-area" style="display: none;">
+    <div id="trivia-area">
         <p id="trivia-question"></p>
         <button onclick="answerTrivia(0)">A</button>
         <button onclick="answerTrivia(1)">B</button>
@@ -79,11 +81,16 @@
         let currentBet = 0;
         
         function startRound() {
+            let betInput = document.getElementById("bet-amount").value;
+            currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
+            bankroll -= currentBet;
             playerHand = [drawCard(), drawCard()];
             dealerHand = [drawCard(), drawCard()];
-            currentBet = 10;
-            bankroll -= currentBet;
             updateDisplay();
+            document.getElementById("hit-btn").style.display = "inline-block";
+            document.getElementById("stand-btn").style.display = "inline-block";
+            document.getElementById("double-btn").style.display = "inline-block";
+            document.getElementById("split-btn").style.display = "inline-block";
         }
 
         function hit() {
@@ -161,7 +168,7 @@
         }
         
         function answerTrivia(option) {
-            if (option === 2) { // Correct answer
+            if (option === 2) {
                 triviaProgress++;
                 if (triviaProgress >= 3) {
                     bankroll += 10;
