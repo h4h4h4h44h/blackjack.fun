@@ -89,12 +89,23 @@
             return values[Math.floor(Math.random() * values.length)];
         }
 
-        function startRound() {
-            if (currentBet > bankroll) {
-                alert("Insufficient funds for this bet!");
-                return;
+        function cardValue(card) {
+            if (["J", "Q", "K"].includes(card)) return 10;
+            if (card === "A") return 11;
+            return parseInt(card);
+        }
+
+        function calculateHandTotal(hand) {
+            let total = hand.reduce((sum, card) => sum + cardValue(card), 0);
+            let aces = hand.filter(card => card === "A").length;
+            while (total > 21 && aces > 0) {
+                total -= 10;
+                aces--;
             }
-            document.getElementById("start-round-btn").disabled = true;
+            return total;
+        }
+
+        function startRound() {
             let betInput = document.getElementById("bet-amount").value;
             currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
             bankroll -= currentBet;
@@ -106,12 +117,15 @@
             document.getElementById("stand-btn").disabled = false;
             document.getElementById("double-btn").disabled = false;
             document.getElementById("split-btn").disabled = false;
+            document.getElementById("start-round-btn").disabled = true;
         }
 
         function updateDisplay() {
             document.getElementById("player-hand").innerText = playerHand.join(", ");
             document.getElementById("dealer-hand").innerText = dealerHand.join(", ");
             document.getElementById("current-bet").innerText = currentBet;
+            document.getElementById("player-total").innerText = calculateHandTotal(playerHand);
+            document.getElementById("dealer-total").innerText = calculateHandTotal(dealerHand);
         }
     </script>
 </body>
