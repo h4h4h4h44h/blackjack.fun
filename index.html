@@ -1,103 +1,154 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Blackjack Game</title>
+    <title>Blackjack Royale</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            background-color: #8B0000;
-            color: white;
-        }
-        #game-area { 
-            margin-top: 20px; 
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            margin: 0;
             padding: 20px;
-            background: #34495e;
+            min-height: 100vh;
+        }
+        h1 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5em;
+        }
+        #game-area {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .hand-container {
+            margin: 15px 0;
+            min-height: 100px;
+        }
+        .card {
             display: inline-block;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
-        }
-        .card { 
-            display: inline-block; 
-            margin: 5px; 
-            padding: 15px; 
-            border: 1px solid white;
-            background: #ecf0f1;
+            width: 70px;
+            height: 100px;
+            margin: 5px;
+            padding: 10px;
+            background: #fff;
             color: black;
-            border-radius: 5px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            font-size: 1.2em;
+            position: relative;
+            transition: transform 0.2s;
         }
-        button { 
-            margin: 10px; 
-            padding: 12px; 
-            background-color: #e74c3c; 
-            color: white; 
-            border: none; 
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .suit {
+            font-size: 1.5em;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+        }
+        .hearts, .diamonds { color: #e74c3c; }
+        .spades, .clubs { color: #2c3e50; }
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            border: none;
+            border-radius: 25px;
+            color: white;
             cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
         }
-        button:hover { 
-            background-color: #c0392b; 
+        button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,107,107,0.5);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
         #trivia-area {
-            margin-top: 20px;
+            background: rgba(46, 204, 113, 0.9);
             padding: 20px;
-            background: #16a085;
-            border-radius: 10px;
-            display: none;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+            border-radius: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        .money {
+            color: #ffd700;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Blackjack</h1>
+    <h1>Blackjack Royale</h1>
     <div id="game-area">
-        <p><strong>Your Hand:</strong> <span id="player-hand"></span> (<span id="player-total"></span>)</p>
+        <div class="hand-container">
+            <p><strong>Your Hand:</strong> <span id="player-hand"></span> (<span id="player-total"></span>)</p>
+            <p id="split-hand" style="display:none"><strong>Split Hand:</strong> <span id="split-hand-cards"></span> (<span id="split-total"></span>)</p>
+        </div>
         <p><strong>Dealer's Hand:</strong> <span id="dealer-hand"></span> (<span id="dealer-total"></span>)</p>
-        <p><strong>Your Bankroll:</strong> $<span id="bankroll">100</span></p>
-        <p><strong>Dealer's Bankroll:</strong> $<span id="dealer-bankroll">100</span></p>
-        <p><strong>Your Bet:</strong> $<span id="current-bet">0</span></p>
+        <p><strong>Your Bankroll:</strong> <span class="money">$<span id="bankroll">100</span></span></p>
+        <p><strong>Dealer's Bankroll:</strong> <span class="money">$<span id="dealer-bankroll">100</span></span></p>
+        <p><strong>Your Bet:</strong> <span class="money">$<span id="current-bet">0</span></span></p>
         <input type="number" id="bet-amount" min="1" max="10000" value="10">
-        <button onclick="startRound()" id="start-round-btn">Start Round</button>
+        <button onclick="startRound()" id="start-round-btn">Deal</button>
         <button id="hit-btn" onclick="hit()" disabled>Hit</button>
         <button id="stand-btn" onclick="stand()" disabled>Stand</button>
-        <button id="double-btn" onclick="doubleDown()" disabled>Double Down</button>
+        <button id="double-btn" onclick="doubleDown()" disabled>Double</button>
         <button id="split-btn" onclick="split()" disabled>Split</button>
     </div>
-    <div id="trivia-area">
+    <div id="trivia-area" style="display:none">
         <p id="trivia-question"></p>
         <button id="option-0" onclick="answerTrivia(0)"></button>
         <button id="option-1" onclick="answerTrivia(1)"></button>
         <button id="option-2" onclick="answerTrivia(2)"></button>
         <button id="option-3" onclick="answerTrivia(3)"></button>
     </div>
+
     <script>
         let bankroll = 100;
         let dealerBankroll = 100;
-        let triviaProgress = 0;
         let playerHand = [];
+        let splitHand = [];
         let dealerHand = [];
         let currentBet = 0;
-        let triviaQuestions = [
+        let splitBet = 0;
+        let gameInProgress = false;
+        let isSplit = false;
+        let currentTrivia = null;
+
+        const suits = ['♥', '♦', '♠', '♣'];
+        const triviaQuestions = [
             {question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2},
             {question: "Who wrote 'To Kill a Mockingbird'?", options: ["Harper Lee", "Mark Twain", "J.K. Rowling", "Ernest Hemingway"], answer: 0},
             {question: "What is the largest planet in our solar system?", options: ["Mars", "Jupiter", "Saturn", "Earth"], answer: 1}
         ];
-        
+
         function drawCard() {
             const values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-            return values[Math.floor(Math.random() * values.length)];
+            const value = values[Math.floor(Math.random() * values.length)];
+            const suit = suits[Math.floor(Math.random() * suits.length)];
+            return { value, suit };
         }
 
         function cardValue(card) {
-            if (["J", "Q", "K"].includes(card)) return 10;
-            if (card === "A") return 11;
-            return parseInt(card);
+            if (["J", "Q", "K"].includes(card.value)) return 10;
+            if (card.value === "A") return 11;
+            return parseInt(card.value);
         }
 
         function calculateHandTotal(hand) {
             let total = hand.reduce((sum, card) => sum + cardValue(card), 0);
-            let aces = hand.filter(card => card === "A").length;
+            let aces = hand.filter(card => card.value === "A").length;
             while (total > 21 && aces > 0) {
                 total -= 10;
                 aces--;
@@ -105,28 +156,215 @@
             return total;
         }
 
-        function startRound() {
-            let betInput = document.getElementById("bet-amount").value;
-            currentBet = Math.min(Math.max(parseInt(betInput), 1), bankroll);
-            bankroll -= currentBet;
-            document.getElementById("bankroll").innerText = bankroll;
-            playerHand = [drawCard(), drawCard()];
-            dealerHand = [drawCard(), drawCard()];
-            updateDisplay();
-            document.getElementById("hit-btn").disabled = false;
-            document.getElementById("stand-btn").disabled = false;
-            document.getElementById("double-btn").disabled = false;
-            document.getElementById("split-btn").disabled = false;
-            document.getElementById("start-round-btn").disabled = true;
+        function formatCard(card) {
+            return `<div class="card ${card.suit === '♥' || card.suit === '♦' ? 'hearts' : 'spades'}">
+                ${card.value}<span class="suit">${card.suit}</span>
+            </div>`;
         }
 
         function updateDisplay() {
-            document.getElementById("player-hand").innerText = playerHand.join(", ");
-            document.getElementById("dealer-hand").innerText = dealerHand.join(", ");
-            document.getElementById("current-bet").innerText = currentBet;
+            document.getElementById("player-hand").innerHTML = playerHand.map(formatCard).join("");
+            document.getElementById("dealer-hand").innerHTML = gameInProgress ? 
+                formatCard(dealerHand[0]) + '<div class="card">?</div>' : 
+                dealerHand.map(formatCard).join("");
+            document.getElementById("current-bet").innerText = currentBet + (isSplit ? splitBet : 0);
             document.getElementById("player-total").innerText = calculateHandTotal(playerHand);
-            document.getElementById("dealer-total").innerText = calculateHandTotal(dealerHand);
+            document.getElementById("dealer-total").innerText = gameInProgress ? 
+                cardValue(dealerHand[0]) : calculateHandTotal(dealerHand);
+            document.getElementById("bankroll").innerText = bankroll;
+            document.getElementById("dealer-bankroll").innerText = dealerBankroll;
+            if (isSplit) {
+                document.getElementById("split-hand").style.display = "block";
+                document.getElementById("split-hand-cards").innerHTML = splitHand.map(formatCard).join("");
+                document.getElementById("split-total").innerText = calculateHandTotal(splitHand);
+            }
         }
+
+        function startRound() {
+            if (gameInProgress) return;
+            let betInput = parseInt(document.getElementById("bet-amount").value);
+            if (isNaN(betInput) || betInput < 1 || betInput > bankroll) {
+                alert("Please enter a valid bet amount!");
+                return;
+            }
+            currentBet = betInput;
+            bankroll -= currentBet;
+            playerHand = [drawCard(), drawCard()];
+            dealerHand = [drawCard(), drawCard()];
+            gameInProgress = true;
+            isSplit = false;
+            splitHand = [];
+            toggleButtons(true);
+            updateDisplay();
+            if (calculateHandTotal(playerHand) === 21) {
+                endRound(true);
+            }
+        }
+
+        function hit(split = false) {
+            if (!gameInProgress) return;
+            const targetHand = split ? splitHand : playerHand;
+            targetHand.push(drawCard());
+            updateDisplay();
+            if (calculateHandTotal(targetHand) > 21) {
+                if (isSplit && !split) hit(true); // Move to split hand if main busts
+                else endRound();
+            }
+        }
+
+        function stand(split = false) {
+            if (!gameInProgress) return;
+            if (isSplit && !split) {
+                hit(true); // Move to split hand
+            } else {
+                dealerPlay();
+                endRound();
+            }
+        }
+
+        function dealerPlay() {
+            while (calculateHandTotal(dealerHand) < 17) {
+                dealerHand.push(drawCard());
+            }
+        }
+
+        function doubleDown(split = false) {
+            if (!gameInProgress || bankroll < currentBet) return;
+            bankroll -= currentBet;
+            if (split) splitBet *= 2;
+            else currentBet *= 2;
+            const targetHand = split ? splitHand : playerHand;
+            targetHand.push(drawCard());
+            updateDisplay();
+            if (calculateHandTotal(targetHand) <= 21 && (!isSplit || split)) {
+                dealerPlay();
+                endRound();
+            }
+        }
+
+        function split() {
+            if (!gameInProgress || playerHand.length !== 2 || 
+                cardValue(playerHand[0]) !== cardValue(playerHand[1]) || 
+                bankroll < currentBet) return;
+            
+            splitHand = [playerHand.pop()];
+            playerHand.push(drawCard());
+            splitHand.push(drawCard());
+            bankroll -= currentBet;
+            splitBet = currentBet;
+            isSplit = true;
+            updateDisplay();
+            toggleButtons(true);
+        }
+
+        function endRound(blackjack = false) {
+            gameInProgress = false;
+            const playerTotal = calculateHandTotal(playerHand);
+            const splitTotal = calculateHandTotal(splitHand);
+            const dealerTotal = calculateHandTotal(dealerHand);
+            let message = "";
+
+            if (blackjack) {
+                bankroll += currentBet * 2.5;
+                message = "Blackjack! You win!";
+            } else {
+                // Main hand
+                if (playerTotal > 21) {
+                    dealerBankroll += currentBet;
+                    message += "Main hand busts! ";
+                } else if (dealerTotal > 21) {
+                    bankroll += currentBet * 2;
+                    message += "Dealer busts! Main hand wins! ";
+                } else if (playerTotal > dealerTotal) {
+                    bankroll += currentBet * 2;
+                    message += "Main hand wins! ";
+                } else if (playerTotal < dealerTotal) {
+                    dealerBankroll += currentBet;
+                    message += "Dealer wins main hand! ";
+                } else {
+                    bankroll += currentBet;
+                    message += "Main hand push! ";
+                }
+
+                // Split hand
+                if (isSplit) {
+                    if (splitTotal > 21) {
+                        dealerBankroll += splitBet;
+                        message += "Split hand busts!";
+                    } else if (dealerTotal > 21) {
+                        bankroll += splitBet * 2;
+                        message += "Dealer busts! Split hand wins!";
+                    } else if (splitTotal > dealerTotal) {
+                        bankroll += splitBet * 2;
+                        message += "Split hand wins!";
+                    } else if (splitTotal < dealerTotal) {
+                        dealerBankroll += splitBet;
+                        message += "Dealer wins split hand!";
+                    } else {
+                        bankroll += splitBet;
+                        message += "Split hand push!";
+                    }
+                }
+            }
+
+            updateDisplay();
+            toggleButtons(false);
+            alert(message);
+
+            // Trivia chance when losing money
+            if (bankroll < 50 && Math.random() < 0.3) {
+                showTrivia();
+            }
+
+            currentBet = 0;
+            splitBet = 0;
+            playerHand = [];
+            splitHand = [];
+            dealerHand = [];
+            isSplit = false;
+            document.getElementById("split-hand").style.display = "none";
+            updateDisplay();
+
+            if (bankroll <= 0) {
+                alert("Game Over! You're out of money!");
+                bankroll = 100;
+                dealerBankroll = 100;
+            }
+        }
+
+        function toggleButtons(active) {
+            document.getElementById("start-round-btn").disabled = active;
+            document.getElementById("hit-btn").disabled = !active;
+            document.getElementById("stand-btn").disabled = !active;
+            document.getElementById("double-btn").disabled = !active;
+            document.getElementById("split-btn").disabled = !active || 
+                playerHand.length !== 2 || 
+                cardValue(playerHand[0]) !== cardValue(playerHand[1]);
+        }
+
+        function showTrivia() {
+            const triviaArea = document.getElementById("trivia-area");
+            currentTrivia = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            document.getElementById("trivia-question").innerText = currentTrivia.question;
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`option-${i}`).innerText = currentTrivia.options[i];
+            }
+            triviaArea.style.display = "block";
+        }
+
+        function answerTrivia(choice) {
+            const triviaArea = document.getElementById("trivia-area");
+            if (choice === currentTrivia.answer) {
+                bankroll += 20;
+                alert("Correct! You won $20!");
+            } else {
+                alert("Wrong answer!");
+            }
+            triviaArea.style.display = "none";
+            updateDisplay();
+        }
+
+        updateDisplay();
     </script>
 </body>
 </html>
