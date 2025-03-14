@@ -136,6 +136,7 @@
         }
         #message-modal-content button {
             background: linear-gradient(45deg, #3498db, #2980b9);
+            margin: 5px;
         }
         #message-modal-content button:hover {
             transform: scale(1.05);
@@ -210,7 +211,9 @@
     <div id="message-modal">
         <div id="message-modal-content">
             <p id="message-text"></p>
-            <button onclick="closeMessage()">OK</button>
+            <button id="take-winnings-btn" style="display:none" onclick="takeWinnings()">Take Winnings and Play Blackjack</button>
+            <button id="continue-trivia-btn" style="display:none" onclick="continueTrivia()">Continue Trivia</button>
+            <button id="ok-btn" onclick="closeMessage()">OK</button>
         </div>
     </div>
 
@@ -329,13 +332,35 @@
             ]
         };
 
-        function showMessage(message) {
+        function showMessage(message, showOptions = false) {
             document.getElementById("message-text").innerText = message;
+            if (showOptions) {
+                document.getElementById("take-winnings-btn").style.display = "inline-block";
+                document.getElementById("continue-trivia-btn").style.display = "inline-block";
+                document.getElementById("ok-btn").style.display = "none";
+            } else {
+                document.getElementById("take-winnings-btn").style.display = "none";
+                document.getElementById("continue-trivia-btn").style.display = "none";
+                document.getElementById("ok-btn").style.display = "inline-block";
+            }
             document.getElementById("message-modal").style.display = "flex";
         }
 
         function closeMessage() {
             document.getElementById("message-modal").style.display = "none";
+        }
+
+        function takeWinnings() {
+            document.getElementById("pregame-trivia").style.display = "none";
+            document.getElementById("game-area").style.display = "block";
+            document.getElementById("message-modal").style.display = "none";
+            showMessage("Starting Blackjack with your bankroll of $" + bankroll + "!");
+            updateDisplay();
+        }
+
+        function continueTrivia() {
+            document.getElementById("message-modal").style.display = "none";
+            showPreGameTrivia();
         }
 
         function drawCard() {
@@ -417,6 +442,7 @@
                     showMessage("No more questions available in this topic! Starting the game.");
                     document.getElementById("pregame-trivia").style.display = "none";
                     document.getElementById("game-area").style.display = "block";
+                    updateDisplay();
                     return;
                 }
                 const trivia = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
@@ -430,6 +456,7 @@
                 document.getElementById("pregame-trivia").style.display = "none";
                 document.getElementById("game-area").style.display = "block";
                 showMessage("Pre-game trivia complete! Start your first round.");
+                updateDisplay();
             }
         }
 
@@ -439,12 +466,19 @@
             if (choice === trivia.answer) {
                 bankroll += 20;
                 preGameTriviaAttempts++;
-                showMessage(`Correct! Your bankroll is now $${bankroll}. Answer another?`);
-                showPreGameTrivia();
+                if (preGameTriviaAttempts < 3) {
+                    showMessage(`Correct! Your bankroll is now $${bankroll}.`, true);
+                } else {
+                    showMessage(`Correct! Your bankroll is now $${bankroll}. You've answered all 3 questions! Starting Blackjack.`);
+                    document.getElementById("pregame-trivia").style.display = "none";
+                    document.getElementById("game-area").style.display = "block";
+                    updateDisplay();
+                }
             } else {
                 showMessage("Wrong answer! Pre-game trivia ends. Start your game!");
                 document.getElementById("pregame-trivia").style.display = "none";
                 document.getElementById("game-area").style.display = "block";
+                updateDisplay();
             }
         }
 
